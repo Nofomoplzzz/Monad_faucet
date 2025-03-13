@@ -54,10 +54,12 @@ class Monad:
                         proxy=self.client.proxy
                 ) as response:
                     response_captcha = await response.json()
-                    print(f'Profile: {self.client.profile} {response_captcha}')
+                    logger.success(
+                        f'Profile: {self.client.profile} {utils.get_account_address(self.client.private_key)} {response_captcha}')
                     await asyncio.sleep(random.randint(1, 15))
         except aiohttp.ClientError as e:
-            print(f"Профиль {self.client.profile} Ошибка клиента: {e}")
+            logger.error(
+                f'Profile: {self.client.profile} Ошибка клиента: {e}')
         except aiohttp.ClientOSError as e:
             print(f"Профиль {self.client.profile} Ошибка соединения: {e}")
         except Exception as e:
