@@ -48,7 +48,7 @@ class Monad:
         try:
             async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=200)) as session:
                 async with session.post(
-                        url='https://testnet.monad.xyz/api/claim',
+                        url='https://testnet.monad.xyz/api/faucet/claim',
                         headers=self.headers,
                         json=json_data,
                         proxy=self.client.proxy
