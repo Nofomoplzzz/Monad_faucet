@@ -16,19 +16,12 @@ class Monad:
         self.version = self.user_agent.split('Chrome/')[1].split('.')[0]
 
         self.headers = {
-            'accept': '*/*',
-            'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
-            'content-type': 'application/json',
-            'origin': 'https://testnet.monad.xyz',
-            'priority': 'u=1, i',
-            'referer': 'https://testnet.monad.xyz/',
-            'sec-ch-ua': f'"Not(A:Brand";v="99", "Google Chrome";v="{self.version}", "Chromium";v="{self.version}"',
-            'sec-ch-ua-mobile': '?0',
             'sec-ch-ua-platform': '"Windows"',
-            'sec-fetch-dest': 'empty',
-            'sec-fetch-mode': 'cors',
-            'sec-fetch-site': 'same-origin',
-            'user-agent': self.user_agent
+            'referer': 'https://testnet.monad.xyz/',
+            'user-agent': self.user_agent,
+            'sec-ch-ua': f'"Not(A:Brand";v="99", "Google Chrome";v="{self.version}", "Chromium";v="{self.version}"',
+            'Content-Type': 'application/json',
+            'sec-ch-ua-mobile': '?0',
         }
 
     async def faucet_mon(self):
@@ -48,7 +41,7 @@ class Monad:
         try:
             async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=200)) as session:
                 async with session.post(
-                        url='https://testnet.monad.xyz/api/faucet/claim',
+                        url='https://faucet-claim.monadinfra.com/',
                         headers=self.headers,
                         json=json_data,
                         proxy=self.client.proxy
