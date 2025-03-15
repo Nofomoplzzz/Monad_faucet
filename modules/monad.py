@@ -52,7 +52,7 @@ class Monad:
                         json=json_data,
                         proxy=self.client.proxy
                 ) as response:
-                    response_captcha = await response.status
+                    response_captcha = response.status
                     if response_captcha == 200:
                         logger.success(
                             f'Profile: {self.client.profile} {utils.get_account_address(self.client.private_key)} Drip successfully {response_captcha}')
