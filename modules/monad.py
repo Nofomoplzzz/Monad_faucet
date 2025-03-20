@@ -1,5 +1,6 @@
 import asyncio
 import random
+import re
 from loguru import logger
 from twocaptcha import TwoCaptcha
 from client import Client
@@ -32,20 +33,51 @@ class Monad:
             'user-agent': self.user_agent
         }
 
-    async def faucet_mon(self):
-        logger.info(
-            f'Profile: {self.client.profile} {utils.get_account_address(self.client.private_key)} Решаю капчу....')
-
-        result = TwoCaptcha('7f108abc2e46b1b25a0e9841dd7eee4c')
-        captcha = result.turnstile(sitekey='0x4AAAAAAA-3X4Nd7hf3mNGx', url='https://testnet.monad.xyz/')
-
-        json_data = {
-            'address': utils.get_account_address(private_key=self.client.private_key),
-            'visitorId': utils.visitor_id(),
-            'cloudFlareResponseToken': f'{captcha["code"]}'
+        self.token_headers = {
+            'Host': 'testnet.monad.xyz',
+            'Cache-Control': 'max-age=0',
+            'Sec-Ch-Ua': f'"Not:A-Brand";v="99", "Chromium";v="{self.version}"',
+            'Sec-Ch-Ua-Mobile': '?0',
+            'Sec-Ch-Ua-Platform': '"Windows"',
+            'Accept-Language': 'ru-RU,ru;q=0.9',
+            'Upgrade-Insecure-Requests': '1',
+            'User-Agent': self.user_agent,
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+            'Sec-Fetch-Site': 'same-origin',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-User': '?1',
+            'Sec-Fetch-Dest': 'document',
+            'Priority': 'u=0, i',
         }
+
+    async def faucet_mon(self):
         try:
+            logger.info(
+                f'Profile: {self.client.profile} Решаю капчу....')
+
+            result = TwoCaptcha('7f108abc2e46b1b25a0e9841dd7eee4c')
+            captcha = result.turnstile(sitekey='0x4AAAAAAA-3X4Nd7hf3mNGx', url='https://testnet.monad.xyz/')
+
+            json_data = {
+                'address': utils.get_account_address(private_key=self.client.private_key),
+                'visitorId': utils.visitor_id(),
+                'cloudFlareResponseToken': f'{captcha["code"]}'
+            }
+
+            logger.info(
+                f'Profile: {self.client.profile}  Получаю токен верификации...')
             async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=200)) as session:
+                async with session.get(
+                        url='https://testnet.monad.xyz/',
+                        headers=self.token_headers,
+                        proxy=self.client.proxy
+                ) as response:
+                    match = re.findall(r'requestVerification.*', await response.text())
+                    token = match[0][35:99]
+                    timestamp = match[0][118:131]
+                    self.headers['x-request-timestamp'] = timestamp
+                    self.headers['x-request-verification-token'] = token
+
                 async with session.post(
                         url='https://faucet-claim.monadinfra.com/',
                         headers=self.headers,
@@ -55,50 +87,17 @@ class Monad:
                     response_captcha = response.status
                     if response_captcha == 200:
                         logger.success(
-                            f'Profile: {self.client.profile} {utils.get_account_address(self.client.private_key)} Drip successfully {response_captcha}')
+                            f'Profile: {self.client.profile} {utils.get_account_address(self.client.private_key)} Drip successfully {await response.json()}')
                     else:
                         logger.warning(
-                            f'Profile: {self.client.profile} {utils.get_account_address(self.client.private_key)} Not claimed {response_captcha}')
+                            f'Profile: {self.client.profile} {utils.get_account_address(self.client.private_key)} Not claimed {await response.json()}')
                     await asyncio.sleep(random.randint(1, 15))
         except aiohttp.ClientError as e:
             logger.error(
-                f'Profile: {self.client.profile} Ошибка клиента: {e}')
+                f'Профиль {self.client.profile} Ошибка клиента: {e}')
         except aiohttp.ClientOSError as e:
             logger.error(
-                f'Profile: {self.client.profile} Ошибка соединения: {e}')
+                f"Профиль {self.client.profile} Ошибка соединения: {e}")
         except Exception as e:
             logger.error(
-                f'Profile: {self.client.profile} Произошла ошибка: {e}')
-
-    async def send_transaction(self):
-        # balance = await client.w3.eth.get_balance(client.account.address)
-        # client.w3.from_wei(balance, 'ether')
-        count_value = random.uniform(0.001, 0.035)
-
-        logger.info(f'Profile: {self.client.profile} {utils.get_account_address(self.client.private_key)} Отправляю транзакцию...')
-        tx = await self.client.send_transaction(
-            to=self.client.account.address,
-            from_=self.client.account.address,
-            value=self.client.w3.to_wei(count_value, 'ether'),
-            max_priority_fee_per_gas=self.client.max_priority_fee()
-        )
-
-
-        if tx:
-            try:
-                await self.client.verif_tx(tx_hash=tx)
-                logger.success(
-                    f'Profile: {self.client.profile} {utils.get_account_address(self.client.private_key)} Transaction success!! tx_hash: {tx.hex()}')
-            except Exception as err:
-                logger.warning(
-                    f'Profile: {self.client.profile} {utils.get_account_address(self.client.private_key)} Transaction error!! tx_hash: {tx.hex()}; error: {err}')
-                raise ValueError(f'{self.client.profile} Ошибка транзакции')
-        else:
-            logger.error(f'Profile: {self.client.profile} {utils.get_account_address(self.client.private_key)} Transaction error!!!')
-            raise ValueError(f'{self.client.profile} Ошибка транзакции')
-
-    async def   balik(self):
-        balance = await self.client.w3.eth.get_balance(self.client.account.address)
-        await self.client.w3.provider.disconnect()
-        # print(f"{self.profile} {self.client.w3.from_wei(balance, 'ether')}")
-        print(self.client.profile, self.client.account.address, self.client.w3.from_wei(balance, 'ether'))
+                f"Профиль {self.client.profile} Произошла ошибка: {e}")
