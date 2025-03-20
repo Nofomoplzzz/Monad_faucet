@@ -55,7 +55,7 @@ class Monad:
             logger.info(
                 f'Profile: {self.client.profile} Решаю капчу....')
 
-            result = TwoCaptcha('7f108abc2e46b1b25a0e9841dd7eee4c')
+            result = TwoCaptcha(settings.API_KEY)
             captcha = result.turnstile(sitekey='0x4AAAAAAA-3X4Nd7hf3mNGx', url='https://testnet.monad.xyz/')
 
             json_data = {
