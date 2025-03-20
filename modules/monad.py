@@ -6,6 +6,7 @@ from twocaptcha import TwoCaptcha
 from client import Client
 import aiohttp
 import utils
+import settings
 from fake_useragent import UserAgent
 
 
