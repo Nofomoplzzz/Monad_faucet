@@ -6,7 +6,7 @@ from twocaptcha import TwoCaptcha
 from client import Client
 import aiohttp
 import utils
-import settings
+import config
 from fake_useragent import UserAgent
 
 
@@ -56,7 +56,7 @@ class Monad:
             logger.info(
                 f'Profile: {self.client.profile} Решаю капчу....')
 
-            result = TwoCaptcha(settings.API_KEY)
+            result = TwoCaptcha(config.API_KEY)
             captcha = result.turnstile(sitekey='0x4AAAAAAA-3X4Nd7hf3mNGx', url='https://testnet.monad.xyz/')
 
             json_data = {
