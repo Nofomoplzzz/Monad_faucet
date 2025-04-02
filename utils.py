@@ -1,7 +1,9 @@
 import uuid
 from anycaptcha import Solver, Service
 from eth_account import Account
-
+from twocaptcha import TwoCaptcha
+from loguru import logger
+import config
 
 
 def visitor_id():
@@ -24,4 +26,16 @@ async def get_captcha_token(site_key, url, api_key):
     )
     return solv_captcha.solution
 
+def cloudflare():
+    try:
+        logger.info(
+            f'Решаю капчу...')
+        result = TwoCaptcha(config.API_KEY)
+        captcha = result.turnstile(
+            sitekey='0x4AAAAAAA-3X4Nd7hf3mNGx',
+            url='https://testnet.monad.xyz/')
+        return captcha
+    except Exception as er:
+        logger.error(
+            f"Произошла ошибка: {er}")
 
